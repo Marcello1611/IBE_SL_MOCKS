@@ -1,0 +1,8 @@
+# Mock server runtime dependencies (Python 3.12)
+fastapi==0.111.1
+uvicorn[standard]==0.30.6
+
+# FastAPI pins/compatibility
+pydantic==2.8.2
+starlette==0.37.2
+
