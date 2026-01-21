@@ -937,3 +937,22 @@ def register_known_routes(app: FastAPI) -> None:
         # FastAPI/Starlette will match these before the catch-all route
         # if they are added earlier.
         app.add_route(path, _known_stub, methods=methods)
+# Step 5: choose option/solution inside flights search.
+if (
+    path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/optionSets/{optionSetId}/option/{optionId}/solution/{solutionId}"
+    and "PUT" in methods
+):
+    return put_select_option_solution
+if (
+    path == "/api/v1/upsell/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/optionSets/{optionSetId}/option/{optionId}/solution/{solutionId}"
+    and "PUT" in methods
+):
+    return put_select_option_solution
+if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/deselect/options" and "PUT" in methods:
+    return put_deselect_options
+if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/selection/confirmation" and (
+    "POST" in methods or "DELETE" in methods
+):
+    return selection_confirmation
+
+

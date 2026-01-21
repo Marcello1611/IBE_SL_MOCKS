@@ -99,6 +99,12 @@ class MockStateStore:
     def global_revision(self) -> int:
         return self._global_revision
 
+    def touch(self) -> int:
+        """Bump global revision for any in-place state mutation."""
+
+        with self._lock:
+            return self._bump_global()
+
     def ensure_conversation(self, ctx: RequestContext) -> tuple[ConversationState, bool]:
         with self._lock:
             existing = self.conversations.get(ctx.conversation_id)
