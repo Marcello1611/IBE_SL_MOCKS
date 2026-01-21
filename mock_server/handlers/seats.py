@@ -428,3 +428,6 @@ async def put_or_delete_seats(request: Request) -> JSONResponse:
         "ids": {"orderId": order_id, "shoppingCartId": cart_id, "airId": air_id},
         "requestMethod": request.method,
         "seatsCount": len(seat_selections),
+
+    }
+    return JSONResponse(payload, status_code=200)

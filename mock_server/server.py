@@ -22,6 +22,8 @@ from starlette.middleware.cors import CORSMiddleware
 from .errors import error_from_exception
 from .headers import RequestContext, build_request_context
 from .responses import fail, ok, with_context_warnings
+from .known_routes import register_known_routes
+from .state import MockStateStore
 
 
 def _safe_json_body(request: Request) -> Any | None:
@@ -60,6 +62,9 @@ def create_app() -> FastAPI:
         openapi_url=None,
     )
 
+    # Global in-memory state store (handlers rely on it).
+    app.state.store = MockStateStore()  # type: ignore[attr-defined]
+
     # Browser UIs and tunneled setups frequently require permissive CORS.
     app.add_middleware(
         CORSMiddleware,
@@ -76,6 +81,7 @@ def create_app() -> FastAPI:
 
         context = build_request_context(request.headers)
         request.state.ctx = context
+        request.state.store = app.state.store  # type: ignore[attr-defined]
         # Cache request body bytes once for consistency across handlers.
         # Starlette caches request.body() internally as well, but we keep a copy
         # in scope to support lightweight parsers without extra awaits.

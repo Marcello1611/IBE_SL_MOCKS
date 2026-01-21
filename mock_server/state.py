@@ -37,6 +37,7 @@ class OrderState:
     conversation_id: str
     currency: str = "USD"
     status: str = "DRAFT"
+    added_air_id: str | None = None
     created_at: str = field(default_factory=now_utc_iso)
     updated_at: str = field(default_factory=now_utc_iso)
     revision: int = 0
@@ -65,6 +66,8 @@ class ShoppingCartState:
     travellers: list[JsonObject] = field(default_factory=list)
     customer: JsonObject = field(default_factory=dict)
     pricing: JsonObject = field(default_factory=dict)
+    flights_search: JsonObject = field(default_factory=dict)
+    selection_confirmed: bool = False
     created_at: str = field(default_factory=now_utc_iso)
     updated_at: str = field(default_factory=now_utc_iso)
     revision: int = 0
@@ -90,6 +93,8 @@ class MockStateStore:
         self.shopping_carts: dict[str, ShoppingCartState] = {}
         self.airs: dict[str, AirState] = {}
         self.profiles: dict[str, ProfileState] = {}
+        # Deterministic search bundles: conversationId + searchKey -> (orderId, cartId, airId)
+        self.search_bundles: dict[str, dict[str, tuple[str, str, str]]] = {}
 
     def _bump_global(self) -> int:
         self._global_revision += 1
@@ -122,6 +127,22 @@ class MockStateStore:
             self.conversations[ctx.conversation_id] = conv
             self._bump_global()
             return conv, True
+
+    def ensure_search_bundle(self, *, ctx: RequestContext, search_key: str, order_id: str, cart_id: str, air_id: str) -> None:
+        """Persist a (conversation, search_key) -> ids mapping."""
+
+        with self._lock:
+            conv_map = self.search_bundles.setdefault(ctx.conversation_id, {})
+            conv_map[search_key] = (order_id, cart_id, air_id)
+            self._bump_global()
+
+    def get_search_bundle(self, *, ctx: RequestContext, search_key: str) -> tuple[str, str, str] | None:
+        with self._lock:
+            conv_map = self.search_bundles.get(ctx.conversation_id)
+            if not conv_map:
+                return None
+            return conv_map.get(search_key)
+
 
     def ensure_order(self, order_id: str, ctx: RequestContext) -> tuple[OrderState, bool]:
         with self._lock:

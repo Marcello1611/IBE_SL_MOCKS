@@ -17,3 +17,16 @@ def now_utc_iso() -> str:
 
 def new_id(prefix: str) -> str:
     return f"{prefix}-{uuid4().hex}"
+
+
+
+def stable_id(prefix: str, seed: str, *, length: int = 12) -> str:
+    """Deterministic ID generator based on a seed string.
+
+    Notes:
+      - Uses SHA-1 for compactness and determinism (not for security).
+      - Output format: <prefix>-<hex[:length]>
+    """
+
+    digest = hashlib.sha1(seed.encode("utf-8")).hexdigest()
+    return f"{prefix}-{digest[:length]}"
