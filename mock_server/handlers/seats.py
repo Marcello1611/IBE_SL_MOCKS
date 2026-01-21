@@ -431,3 +431,203 @@ async def put_or_delete_seats(request: Request) -> JSONResponse:
 
     }
     return JSONResponse(payload, status_code=200)
+async def put_ancillaries_seats(request: Request) -> JSONResponse:
+    """PUT /api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/ancillaries/seats
+
+    The UI may use AncillariesUpdateRequest wrapper. This handler behaves like PUT /seats.
+    """
+
+    ctx: RequestContext = getattr(request.state, "ctx", build_request_context(request.headers))
+
+    store: MockStateStore | None = getattr(request.state, "store", None)
+    if store is None:
+        store = getattr(request.app.state, "store", None)  # type: ignore[attr-defined]
+
+    order_id = str(request.path_params.get("orderId") or "").strip()
+    cart_id = str(request.path_params.get("shoppingCartId") or "").strip()
+    air_id = str(request.path_params.get("airId") or "").strip()
+
+    payload = ok()
+    with_context_warnings(payload, context_warnings=ctx.warnings)
+
+    if store is None:
+        payload["warnings"].append(
+            {
+                "code": "STATE_STORE_MISSING",
+                "message": "State store is not available; ancillaries seats update was not persisted.",
+                "details": {"orderId": order_id, "shoppingCartId": cart_id, "airId": air_id},
+            }
+        )
+        return JSONResponse(payload, status_code=200)
+
+    store.ensure_from_request(ctx=ctx, path_params=request.path_params)
+
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        body = {}
+
+    req = _safe_json(body)
+    seat_selections_req = _extract_seat_selections(req)
+
+    seat_selections, warnings = _update_store_seats(
+        store,
+        ctx=ctx,
+        order_id=order_id,
+        cart_id=cart_id,
+        air_id=air_id,
+        new_selections=seat_selections_req,
+    )
+
+    pricing, currency = _reprice_cart(store, ctx=ctx, order_id=order_id, cart_id=cart_id, air_id=air_id)
+
+    shopping_cart = _build_shopping_cart_payload(order_id=order_id, cart_id=cart_id, air_id=air_id, currency=currency)
+    shopping_cart["step"] = "SEATS"
+    shopping_cart["pricing"] = pricing
+    _attach_seats_to_cart(shopping_cart, seat_selections)
+
+    payload.update(
+        {
+            "retrieve": {"shoppingCart": True, "ancillariesPricing": True},
+            "shoppingCart": shopping_cart,
+        }
+    )
+    for w in warnings:
+        payload["warnings"].append(w)
+
+    payload["mock"] = {
+        "kind": "AncillariesSeatsUpdate",
+        "ids": {"orderId": order_id, "shoppingCartId": cart_id, "airId": air_id},
+        "seatsCount": len(seat_selections),
+    }
+    return JSONResponse(payload, status_code=200)
+
+
+def _auto_assign_seat(*, seed: str, used: set[str], start_row: int = 20) -> tuple[str, str]:
+    """Deterministically assign a free seat for preselect/suggestion endpoints."""
+
+    cols = ["A", "B", "C", "D", "F", "G", "H", "J", "K"]
+    # Take a stable hex slice and map it to row/col space.
+    hex_part = stable_id("s", seed, length=8).split("-", 1)[1]
+    n = int(hex_part, 16)
+    row = start_row + (n % 30)
+    col = cols[n % len(cols)]
+
+    for _ in range(200):
+        key = f"{row}{col}"
+        if key not in used:
+            used.add(key)
+            return str(row), col
+        n += 1
+        row = start_row + (n % 30)
+        col = cols[n % len(cols)]
+
+    used.add(f"{row}{col}")
+    return str(row), col
+
+
+async def post_seats_preselect(request: Request) -> JSONResponse:
+    """POST seats preselect/suggestion.
+
+    Contract: SeatsPreselectResponse
+      - seatSelections: list[SeatSelection]
+    """
+
+    ctx: RequestContext = getattr(request.state, "ctx", build_request_context(request.headers))
+
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        body = {}
+
+    selections_in = _extract_seat_selections(_safe_json(body))
+    used: set[str] = set()
+    out: list[dict[str, Any]] = []
+
+    for idx, s in enumerate(selections_in):
+        pid = str(s.get("passengerId") or "").strip()
+        sid = str(s.get("segmentId") or "").strip()
+        if not pid or not sid:
+            continue
+
+        row, col = _auto_assign_seat(seed=f"{ctx.conversation_id}|{sid}|{pid}|{idx}", used=used)
+        out.append(
+            {
+                "passengerId": pid,
+                "segmentId": sid,
+                "rowNumber": row,
+                "seatNumber": col,
+                "priorityMember": s.get("priorityMember"),
+                "priorityClassicMember": s.get("priorityClassicMember"),
+                "specialAssistance": s.get("specialAssistance"),
+                "redemption": s.get("redemption"),
+                "usePoints": s.get("usePoints"),
+                "smiFree": s.get("smiFree"),
+            }
+        )
+
+    payload = ok({"seatSelections": out})
+    with_context_warnings(payload, context_warnings=ctx.warnings)
+    payload["mock"] = {"kind": "SeatsPreselect", "count": len(out)}
+    return JSONResponse(payload, status_code=200)
+
+
+async def post_special_assistance_seats_update(request: Request) -> JSONResponse:
+    """POST /special-assistance-seats/update
+
+    Contract: SpecialAssistanceSeatsResponse extends ShoppingCartResponse and adds `seatsSelections`.
+    """
+
+    ctx: RequestContext = getattr(request.state, "ctx", build_request_context(request.headers))
+
+    store: MockStateStore | None = getattr(request.state, "store", None)
+    if store is None:
+        store = getattr(request.app.state, "store", None)  # type: ignore[attr-defined]
+
+    order_id = str(request.path_params.get("orderId") or "").strip()
+    cart_id = str(request.path_params.get("shoppingCartId") or "").strip()
+    air_id = str(request.path_params.get("airId") or "").strip()
+
+    payload = ok()
+    with_context_warnings(payload, context_warnings=ctx.warnings)
+
+    seat_selections: list[dict[str, Any]] = []
+
+    if store is None:
+        payload["warnings"].append(
+            {
+                "code": "STATE_STORE_MISSING",
+                "message": "State store is not available; returning empty special assistance seats response.",
+                "details": {"orderId": order_id, "shoppingCartId": cart_id, "airId": air_id},
+            }
+        )
+        payload["seatsSelections"] = []
+        payload["mock"] = {"kind": "SpecialAssistanceSeatsUpdate", "count": 0}
+        return JSONResponse(payload, status_code=200)
+
+    store.ensure_from_request(ctx=ctx, path_params=request.path_params)
+
+    air_state, _ = store.ensure_air(order_id, cart_id, air_id)
+    if isinstance(air_state.ancillaries.get("seatSelections"), list):
+        seat_selections = [_safe_json(x) for x in air_state.ancillaries.get("seatSelections")]
+
+    pricing, currency = _reprice_cart(store, ctx=ctx, order_id=order_id, cart_id=cart_id, air_id=air_id)
+
+    shopping_cart = _build_shopping_cart_payload(order_id=order_id, cart_id=cart_id, air_id=air_id, currency=currency)
+    shopping_cart["step"] = "SEATS"
+    shopping_cart["pricing"] = pricing
+    _attach_seats_to_cart(shopping_cart, seat_selections)
+
+    payload.update(
+        {
+            "retrieve": {"shoppingCart": True, "ancillariesPricing": True},
+            "shoppingCart": shopping_cart,
+            "seatsSelections": seat_selections,
+        }
+    )
+
+    payload["mock"] = {"kind": "SpecialAssistanceSeatsUpdate", "count": len(seat_selections)}
+    return JSONResponse(payload, status_code=200)
+
+    }
+    return JSONResponse(payload, status_code=200)

@@ -53,6 +53,89 @@ def _safe_json(value: Any) -> dict[str, Any]:
     return {}
 
 
+
+
+def _apply_selected_seats_on_seatmap(
+    cabins: list[dict[str, Any]],
+    *,
+    store: MockStateStore | None,
+    order_id: str | None,
+    cart_id: str | None,
+    air_id: str,
+) -> None:
+    """Overlay selected seats from state store onto generated seat map.
+
+    UI expects already-selected seats to appear unavailable.
+    This overlay is intentionally tolerant: if store/air is missing, it no-ops.
+    """
+
+    if store is None:
+        return
+
+    air_state = None
+    try:
+        # Prefer direct lookup (works even when orderId/cartId are not present in URL).
+        air_state = store.airs.get(air_id)  # type: ignore[attr-defined]
+    except Exception:  # noqa: BLE001
+        air_state = None
+
+    if air_state is None and order_id and cart_id:
+        try:
+            air_state, _ = store.ensure_air(order_id, cart_id, air_id)
+        except Exception:  # noqa: BLE001
+            return
+
+    if air_state is None:
+        return
+
+    selections = getattr(air_state, "ancillaries", {}).get("seatSelections")
+    if not isinstance(selections, list):
+        return
+
+    occupied: dict[str, set[tuple[str, str]]] = {}
+    for s in selections:
+        sd = _safe_json(s)
+        seg = str(sd.get("segmentId") or "").strip()
+        row = str(sd.get("rowNumber") or "").strip()
+        col = str(sd.get("seatNumber") or "").strip().upper()
+        if not seg or not row or not col:
+            continue
+        occupied.setdefault(seg, set()).add((row, col))
+
+    if not occupied:
+        return
+
+    for cabin in cabins:
+        seg = _safe_json(cabin.get("segment"))
+        seg_id = str(seg.get("id") or "").strip()
+        if not seg_id or seg_id not in occupied:
+            continue
+
+        occ = occupied[seg_id]
+        rows = cabin.get("rows")
+        if not isinstance(rows, list):
+            continue
+
+        for row_obj in rows:
+            ro = _safe_json(row_obj)
+            places = ro.get("places")
+            if not isinstance(places, list):
+                continue
+
+            for place in places:
+                pd = _safe_json(place)
+                if not pd:
+                    continue
+                if pd.get("absent") is True:
+                    continue
+                r = str(pd.get("row") or "").strip()
+                c = str(pd.get("number") or "").strip().upper()
+                if not r or not c:
+                    continue
+                if (r, c) in occ:
+                    place["available"] = False
+
+
 def _now_local_iso() -> str:
     # Segment dates in generated flights_search are LocalDateTime w/o timezone suffix.
     return datetime.utcnow().replace(microsecond=0).isoformat()
@@ -507,6 +590,8 @@ async def _cabins_response(
         cabins.append(_cabin(cabin_type="ECONOMY", segment=seg, currency=currency, seed=seed))
         cabins.append(_cabin(cabin_type="PREMIUM", segment=seg, currency=currency, seed=seed + "|P"))
         cabins.append(_cabin(cabin_type="BUSINESS", segment=seg, currency=currency, seed=seed + "|B"))
+
+    _apply_selected_seats_on_seatmap(cabins, store=store, order_id=order_id, cart_id=cart_id, air_id=air_id)
 
     payload = ok(
         {
