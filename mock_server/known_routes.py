@@ -27,6 +27,7 @@ from .handlers.flights_selection import (
     put_select_option_solution,
     selection_confirmation,
 )
+from .handlers.seats import post_seats_preselect, post_special_assistance_seats_update, put_ancillaries_seats, put_or_delete_seats
 
 
 log = logging.getLogger("mock_server.known_routes")
@@ -990,6 +991,20 @@ def _override_handler(path: str, methods: list[str]):
         return get_cabins_postsell
     if path == "/api/v1/orders/{orderId}/airs/{airId}/segments/{segmentId}/passengers/{passengerId}/cabins" and "GET" in methods:
         return get_cabins_v2
+
+    # Step 7: seat selection (stateful).
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/seats" and ("PUT" in methods or "DELETE" in methods):
+        return put_or_delete_seats
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/ancillaries/seats" and "PUT" in methods:
+        return put_ancillaries_seats
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/seats/preselect" and ("POST" in methods or "PUT" in methods):
+        return post_seats_preselect
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/preseat/suggestion" and "POST" in methods:
+        return post_seats_preselect
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/extraseat/seats/preselect" and "POST" in methods:
+        return post_seats_preselect
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/special-assistance-seats/update" and "POST" in methods:
+        return post_special_assistance_seats_update
 
     return None
 
