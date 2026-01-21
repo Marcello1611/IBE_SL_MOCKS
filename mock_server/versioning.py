@@ -6,6 +6,7 @@ unless the caller relies on uniqueness only.
 
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime, timezone
 from uuid import uuid4
 

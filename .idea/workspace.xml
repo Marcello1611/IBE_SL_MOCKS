@@ -4,19 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e3d1d52f-6502-41b5-b125-a8616995a95f" name="Changes" comment="Initial patch" />
-    <list id="2ad68b4b-a3b3-46cd-b2f0-172bd505952f" name="Step 1-0" comment="">
-      <change afterPath="$PROJECT_DIR$/mock_server/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mock_server/errors.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mock_server/headers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mock_server/responses.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mock_server/versioning.py" afterDir="false" />
+    <list default="true" id="e3d1d52f-6502-41b5-b125-a8616995a95f" name="Changes" comment="Initial patch">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
-    <list id="864882b4-6941-4922-ba39-769a666a1549" name="Step 1-1" comment="">
-      <change afterPath="$PROJECT_DIR$/mock_server/__main__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mock_server/server.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-    </list>
+    <list id="798e2af0-6ba8-451f-986a-88265f8aeab4" name="Step 1-2" comment="Step 1-2" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -25,6 +16,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "Marcello1611"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Marcello1611/IBE_SL_MOCKS",
+    "accountId": "8cb4a2c2-2b7a-43f5-8076-0cbb901963fa"
+  }
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
 }</component>
@@ -51,8 +54,10 @@
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="e3d1d52f-6502-41b5-b125-a8616995a95f" name="Changes" comment="" />
-      <changelist id="2ad68b4b-a3b3-46cd-b2f0-172bd505952f" name="Step 1-0" comment="" />
-      <changelist id="864882b4-6941-4922-ba39-769a666a1549" name="Step 1-1" comment="" />
+      <changelist id="" name="Step 1-0" comment="" />
+      <changelist id="" name="Step 1-1" comment="" />
+      <changelist id="798e2af0-6ba8-451f-986a-88265f8aeab4" name="Step 1-2" comment="" />
+      <changelist id="" name="Step 1-3" comment="" />
       <created>1769017661627</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
@@ -66,11 +71,58 @@
       <option name="project" value="LOCAL" />
       <updated>1769019869933</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Step 1-0">
+      <option name="closed" value="true" />
+      <created>1769019991877</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1769019991877</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Step 1-1">
+      <option name="closed" value="true" />
+      <created>1769020011848</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1769020011848</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Step 1-2">
+      <option name="closed" value="true" />
+      <created>1769020112312</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1769020112312</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Step 1-3">
+      <option name="closed" value="true" />
+      <created>1769020962212</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1769020962212</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
+    <MESSAGE value="Step 1-0" />
+    <MESSAGE value="Step 1-1" />
+    <MESSAGE value="Step 1-2" />
     <MESSAGE value="Initial patch" />
-    <option name="LAST_COMMIT_MESSAGE" value="Initial patch" />
+    <MESSAGE value="Step 1-3" />
+    <option name="LAST_COMMIT_MESSAGE" value="Step 1-3" />
   </component>
 </project>
