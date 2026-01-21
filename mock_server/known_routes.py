@@ -20,6 +20,14 @@ from fastapi.responses import JSONResponse
 from .headers import RequestContext, build_request_context
 from .responses import ok, with_context_warnings
 from .state import MockStateStore
+from .handlers.cabins import get_cabins_cart, get_cabins_cart_short, get_cabins_postsell, get_cabins_v2
+from .handlers.flights_search import post_flights_search, post_flights_search_with_cart
+from .handlers.flights_selection import (
+    put_deselect_options,
+    put_select_option_solution,
+    selection_confirmation,
+)
+
 
 log = logging.getLogger("mock_server.known_routes")
 
@@ -892,6 +900,7 @@ KNOWN_ROUTES: list[dict[str, Any]] = [
 ]
 
 
+
 async def _known_stub(request: Request) -> JSONResponse:
     """Default stub handler for known endpoints.
 
@@ -899,7 +908,7 @@ async def _known_stub(request: Request) -> JSONResponse:
     - Always return HTTP 200 with BaseResponse-shaped JSON.
     - Never raise.
     - Add context warnings (missing headers).
-    - Auto-create referenced entities (order/cart/air) to keep stateful flows stable.
+    - Auto-create referenced entities (order/cart/air/profile) to keep stateful flows stable.
     """
 
     try:
@@ -911,8 +920,21 @@ async def _known_stub(request: Request) -> JSONResponse:
 
     context: RequestContext = getattr(request.state, "ctx", build_request_context(request.headers))
 
-    payload = ok()
+    # Ensure referenced entities exist (best-effort, never raising).
+    store = MockStateStore.get()
+    auto_created = store.ensure_from_request(ctx=context, path_params=request.path_params)
+
+    payload = ok(
+        {
+            "_mock": {
+                "revision": store.global_revision,
+            }
+        }
+    )
     with_context_warnings(payload, context_warnings=context.warnings)
+    for w in auto_created:
+        payload["warnings"].append(w)
+
     payload["warnings"].append(
         {
             "code": "NOT_IMPLEMENTED",
@@ -927,32 +949,57 @@ async def _known_stub(request: Request) -> JSONResponse:
     return JSONResponse(payload, status_code=200)
 
 
-def register_known_routes(app: FastAPI) -> None:
-    """Register all known routes (Step 2)."""
+def _override_handler(path: str, methods: list[str]):
+    """Return a stateful handler for a known route, or None.
 
-    # Group by (path) and register methods together.
+    Keeping matching explicit here prevents accidental shadowing by the /api/v1/* catch-all.
+    """
+
+    # Step 4: flights search (initial + cart-bound).
+    if path == "/api/v1/flights/search" and "POST" in methods:
+        return post_flights_search
+    if path == "/api/v1/flights/search/deeplink" and "POST" in methods:
+        return post_flights_search
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search" and "POST" in methods:
+        return post_flights_search_with_cart
+
+    # Step 5: choose option/solution inside flights search.
+    if (
+        path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/optionSets/{optionSetId}/option/{optionId}/solution/{solutionId}"
+        and "PUT" in methods
+    ):
+        return put_select_option_solution
+    if (
+        path == "/api/v1/upsell/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/optionSets/{optionSetId}/option/{optionId}/solution/{solutionId}"
+        and "PUT" in methods
+    ):
+        return put_select_option_solution
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/deselect/options" and "PUT" in methods:
+        return put_deselect_options
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/selection/confirmation" and (
+        "POST" in methods or "DELETE" in methods
+    ):
+        return selection_confirmation
+
+    # Step 6: full seat map (cabins).
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/cabins" and "GET" in methods:
+        return get_cabins_cart
+    if path == "/api/v1/shoppingCarts/{shoppingCartId}/airs/{airId}/cabins" and "GET" in methods:
+        return get_cabins_cart_short
+    if path == "/api/v1/orders/{orderId}/airs/{airId}/cabins" and "GET" in methods:
+        return get_cabins_postsell
+    if path == "/api/v1/orders/{orderId}/airs/{airId}/segments/{segmentId}/passengers/{passengerId}/cabins" and "GET" in methods:
+        return get_cabins_v2
+
+    return None
+
+
+def register_known_routes(app: FastAPI) -> None:
+    """Register all known routes (Step 2+)."""
+
     for item in KNOWN_ROUTES:
         path = item["path"]
         methods = item["methods"]
-        # FastAPI/Starlette will match these before the catch-all route
-        # if they are added earlier.
-        app.add_route(path, _known_stub, methods=methods)
-# Step 5: choose option/solution inside flights search.
-if (
-    path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/optionSets/{optionSetId}/option/{optionId}/solution/{solutionId}"
-    and "PUT" in methods
-):
-    return put_select_option_solution
-if (
-    path == "/api/v1/upsell/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/optionSets/{optionSetId}/option/{optionId}/solution/{solutionId}"
-    and "PUT" in methods
-):
-    return put_select_option_solution
-if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/deselect/options" and "PUT" in methods:
-    return put_deselect_options
-if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/flights/search/selection/confirmation" and (
-    "POST" in methods or "DELETE" in methods
-):
-    return selection_confirmation
 
-
+        handler = _override_handler(path, methods) or _known_stub
+        app.add_route(path, handler, methods=methods)
