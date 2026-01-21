@@ -4,21 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e3d1d52f-6502-41b5-b125-a8616995a95f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/IBE_SL_MOCKS.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="e3d1d52f-6502-41b5-b125-a8616995a95f" name="Changes" comment="Initial patch" />
     <list id="2ad68b4b-a3b3-46cd-b2f0-172bd505952f" name="Step 1-0" comment="">
       <change afterPath="$PROJECT_DIR$/mock_server/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/mock_server/errors.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/mock_server/headers.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/mock_server/responses.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/mock_server/versioning.py" afterDir="false" />
+    </list>
+    <list id="864882b4-6941-4922-ba39-769a666a1549" name="Step 1-1" comment="">
+      <change afterPath="$PROJECT_DIR$/mock_server/__main__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/mock_server/server.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,11 +52,25 @@
     <task active="true" id="Default" summary="Default task">
       <changelist id="e3d1d52f-6502-41b5-b125-a8616995a95f" name="Changes" comment="" />
       <changelist id="2ad68b4b-a3b3-46cd-b2f0-172bd505952f" name="Step 1-0" comment="" />
+      <changelist id="864882b4-6941-4922-ba39-769a666a1549" name="Step 1-1" comment="" />
       <created>1769017661627</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1769017661627</updated>
     </task>
+    <task id="LOCAL-00001" summary="Initial patch">
+      <option name="closed" value="true" />
+      <created>1769019869933</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1769019869933</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Initial patch" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial patch" />
   </component>
 </project>

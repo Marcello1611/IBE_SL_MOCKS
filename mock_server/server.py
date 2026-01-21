@@ -5,7 +5,9 @@ Step 1 objective:
   - Ensure no request results in an unhandled exception (no 500 propagation).
   - Provide a catch-all handler for /api/v1/* for all common methods.
 
-Endpoint-specific handlers are introduced in Step 2+.
+Step 2 objective:
+  - Explicitly match endpoints from FlightsRest/BookingsRest/InsuranceRest/ProfileRest
+    before the catch-all, returning stable stub responses.
 """
 
 from __future__ import annotations
@@ -74,6 +76,14 @@ def create_app() -> FastAPI:
 
         context = build_request_context(request.headers)
         request.state.ctx = context
+        # Cache request body bytes once for consistency across handlers.
+        # Starlette caches request.body() internally as well, but we keep a copy
+        # in scope to support lightweight parsers without extra awaits.
+        try:
+            body_bytes = await request.body()
+            request.scope["_body"] = body_bytes
+        except Exception:  # noqa: BLE001
+            request.scope["_body"] = b""
         try:
             response: Response = await call_next(request)
             return response
@@ -92,6 +102,10 @@ def create_app() -> FastAPI:
     async def healthz():
         return ok({"status": "ok"})
 
+    # Step 2: register known API routes before catch-all.
+    # These are currently stubbed (BaseResponse + NOT_IMPLEMENTED warning).
+    register_known_routes(app)
+
     @app.api_route(
         "/api/v1/{full_path:path}",
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
@@ -107,13 +121,6 @@ def create_app() -> FastAPI:
         """
 
         context: RequestContext = getattr(request.state, "ctx", build_request_context(request.headers))
-
-        # Read body bytes once to make it available for downstream steps.
-        try:
-            body_bytes = await request.body()
-            request.scope["_body"] = body_bytes
-        except Exception:  # noqa: BLE001
-            request.scope["_body"] = b""  # best-effort
 
         _ = _safe_json_body(request)  # parsed body is currently unused in Step 1
 
