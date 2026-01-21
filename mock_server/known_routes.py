@@ -19,6 +19,7 @@ from fastapi.responses import JSONResponse
 
 from .headers import RequestContext, build_request_context
 from .responses import ok, with_context_warnings
+from .state import MockStateStore
 
 log = logging.getLogger("mock_server.known_routes")
 
@@ -898,7 +899,7 @@ async def _known_stub(request: Request) -> JSONResponse:
     - Always return HTTP 200 with BaseResponse-shaped JSON.
     - Never raise.
     - Add context warnings (missing headers).
-    - Add NOT_IMPLEMENTED warning with method/path.
+    - Auto-create referenced entities (order/cart/air) to keep stateful flows stable.
     """
 
     try:
