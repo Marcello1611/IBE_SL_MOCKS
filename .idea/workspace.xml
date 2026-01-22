@@ -5,9 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e3d1d52f-6502-41b5-b125-a8616995a95f" name="Changes" comment="Initial patch" />
-    <list id="0d4cac71-5f8a-4c7e-959f-3d17e4445408" name="Fix 1-8-1" comment="Fix 1-8-1">
-      <change beforePath="$PROJECT_DIR$/mock_server/handlers/cabins.py" beforeDir="false" afterPath="$PROJECT_DIR$/mock_server/handlers/cabins.py" afterDir="false" />
-    </list>
     <list id="798e2af0-6ba8-451f-986a-88265f8aeab4" name="Step 1-2" comment="Step 1-2" />
     <list id="77287a8d-a141-4246-b528-8fe668541afa" name="Step 1-5" comment="Step 1-5" />
     <list id="33d78599-058d-4fc0-916b-6c28102e3d29" name="Step 1-7" comment="Step 1-7" />
@@ -65,7 +62,7 @@
       <changelist id="" name="Step 1-6" comment="" />
       <changelist id="33d78599-058d-4fc0-916b-6c28102e3d29" name="Step 1-7" comment="" />
       <changelist id="" name="step 1-7-2" comment="" />
-      <changelist id="0d4cac71-5f8a-4c7e-959f-3d17e4445408" name="Fix 1-8-1" comment="" />
+      <changelist id="" name="Fix 1-8-1" comment="" />
       <created>1769017661627</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
@@ -175,7 +172,31 @@
       <option name="project" value="LOCAL" />
       <updated>1769075009900</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="Fix 1-8-1">
+      <option name="closed" value="true" />
+      <created>1769075036223</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1769075036223</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Initial patch">
+      <option name="closed" value="true" />
+      <created>1769075040948</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1769075040948</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Initial patch">
+      <option name="closed" value="true" />
+      <created>1769086054600</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1769086054600</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
