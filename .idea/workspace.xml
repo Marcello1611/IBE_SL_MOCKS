@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e3d1d52f-6502-41b5-b125-a8616995a95f" name="Changes" comment="Initial patch">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="e3d1d52f-6502-41b5-b125-a8616995a95f" name="Changes" comment="Initial patch" />
     <list id="0d4cac71-5f8a-4c7e-959f-3d17e4445408" name="Fix 1-8-1" comment="Fix 1-8-1">
       <change beforePath="$PROJECT_DIR$/mock_server/handlers/cabins.py" beforeDir="false" afterPath="$PROJECT_DIR$/mock_server/handlers/cabins.py" afterDir="false" />
     </list>
@@ -169,7 +167,15 @@
       <option name="project" value="LOCAL" />
       <updated>1769071660061</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Initial patch">
+      <option name="closed" value="true" />
+      <created>1769075009900</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1769075009900</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -192,8 +198,8 @@
     <MESSAGE value="Step 1-6" />
     <MESSAGE value="Step 1-7" />
     <MESSAGE value="step 1-7-2" />
-    <MESSAGE value="Initial patch" />
     <MESSAGE value="Fix 1-8-1" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix 1-8-1" />
+    <MESSAGE value="Initial patch" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial patch" />
   </component>
 </project>
