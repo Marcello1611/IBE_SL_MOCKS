@@ -135,6 +135,7 @@ def _apply_selected_seats_on_seatmap(
                 if (r, c) in occ:
                     place["available"] = False
 
+                seat = _safe_json(pd.get("seat"))
 
 def _now_local_iso() -> str:
     # Segment dates in generated flights_search are LocalDateTime w/o timezone suffix.
