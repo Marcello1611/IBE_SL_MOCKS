@@ -149,7 +149,15 @@
       <option name="project" value="LOCAL" />
       <updated>1769036145466</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="Initial patch">
+      <option name="closed" value="true" />
+      <created>1769037819721</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1769037819721</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -171,8 +179,8 @@
     <MESSAGE value="Step 1-5" />
     <MESSAGE value="Step 1-6" />
     <MESSAGE value="Step 1-7" />
-    <MESSAGE value="Initial patch" />
     <MESSAGE value="step 1-7-2" />
-    <option name="LAST_COMMIT_MESSAGE" value="step 1-7-2" />
+    <MESSAGE value="Initial patch" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial patch" />
   </component>
 </project>

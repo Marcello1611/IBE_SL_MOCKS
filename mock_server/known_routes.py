@@ -28,6 +28,7 @@ from .handlers.flights_selection import (
     selection_confirmation,
 )
 from .handlers.seats import post_seats_preselect, post_special_assistance_seats_update, put_ancillaries_seats, put_or_delete_seats
+from .handlers.bags import delete_shopping_cart_bags, put_select_baggage, put_update_bags
 
 
 log = logging.getLogger("mock_server.known_routes")
@@ -1005,6 +1006,15 @@ def _override_handler(path: str, methods: list[str]):
         return post_seats_preselect
     if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/special-assistance-seats/update" and "POST" in methods:
         return post_special_assistance_seats_update
+
+
+    # Step 8: baggage selection (happy-hour discounted + regular).
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/baggage" and "PUT" in methods:
+        return put_select_baggage
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/ancillaries/bags" and "PUT" in methods:
+        return put_update_bags
+    if path == "/api/v1/orders/{orderId}/shoppingCarts/{shoppingCartId}/airs/{airId}/bags" and "DELETE" in methods:
+        return delete_shopping_cart_bags
 
     return None
 

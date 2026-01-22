@@ -27,6 +27,7 @@ from ..versioning import now_utc_iso
 
 # Reuse helpers to keep shapes aligned with search payloads.
 from .flights_search import _build_shopping_cart_payload, _make_pricing, _safe_json
+from .seats import _seat_price
 
 
 def _safe_list(value: Any) -> list[Any]:
@@ -118,6 +119,62 @@ def _compute_total(search_obj: dict[str, Any]) -> tuple[float, str]:
         currency = cur or currency
         total_amount += amount
     return total_amount, currency
+
+def _compute_ancillaries_total(store: MockStateStore, *, order_id: str, cart_id: str, air_id: str) -> float:
+    """Compute seats + bags totals from stored ancillaries."""
+
+    air_state, _ = store.ensure_air(order_id, cart_id, air_id)
+
+    seat_total = 0.0
+    seats = air_state.ancillaries.get("seatSelections")
+    if isinstance(seats, list):
+        for s in seats:
+            sd = _safe_json(s)
+            seat_total += _seat_price(str(sd.get("rowNumber") or ""), str(sd.get("seatNumber") or ""))
+
+    bag_total = 0.0
+    items = air_state.ancillaries.get("baggageItems")
+    if isinstance(items, list):
+        for it in items:
+            itd = _safe_json(it)
+            try:
+                bag_total += float(itd.get("amount"))
+            except Exception:  # noqa: BLE001
+                continue
+
+    return seat_total + bag_total
+
+
+def _attach_existing_ancillaries(store: MockStateStore, *, order_id: str, cart_id: str, air_id: str, shopping_cart: dict[str, Any]) -> None:
+    air_state, _ = store.ensure_air(order_id, cart_id, air_id)
+    seats = air_state.ancillaries.get("seatSelections")
+    bags = air_state.ancillaries.get("baggageSelections")
+    items = air_state.ancillaries.get("baggageItems")
+
+    if isinstance(seats, list):
+        shopping_cart["seatSelections"] = [_safe_json(x) for x in seats]
+    if isinstance(bags, list):
+        shopping_cart["baggageSelections"] = [_safe_json(x) for x in bags]
+    if isinstance(items, list):
+        shopping_cart["baggageItems"] = [_safe_json(x) for x in items]
+
+    order = shopping_cart.get("order")
+    if isinstance(order, dict):
+        airs = order.get("airs")
+        if isinstance(airs, list) and airs:
+            a0 = airs[0]
+            if isinstance(a0, dict):
+                anc = a0.get("ancillaries")
+                if not isinstance(anc, dict):
+                    anc = {}
+                    a0["ancillaries"] = anc
+                if "seatSelections" in shopping_cart:
+                    anc["seatSelections"] = shopping_cart["seatSelections"]
+                if "baggageSelections" in shopping_cart:
+                    anc["baggageSelections"] = shopping_cart["baggageSelections"]
+                if "baggageItems" in shopping_cart:
+                    anc["baggageItems"] = shopping_cart["baggageItems"]
+
 
 
 def _mark_selected(option_set: dict[str, Any], option_id: str, solution_id: str) -> None:
@@ -220,6 +277,10 @@ async def put_select_option_solution(request: Request) -> JSONResponse:
     _mark_selected(option_set, option_id, solution_id)
 
     total_amount, currency = _compute_total(search_obj)
+    ancillaries_total = 0.0
+    if store is not None and air_id:
+        ancillaries_total = _compute_ancillaries_total(store, order_id=order_id, cart_id=cart_id, air_id=air_id)
+    total_amount = total_amount + ancillaries_total
     cart_state.pricing = _make_pricing(total_amount, currency)
     cart_state.updated_at = now_utc_iso()
     cart_state.revision = store.touch()
@@ -237,6 +298,8 @@ async def put_select_option_solution(request: Request) -> JSONResponse:
     }
 
     shopping_cart = _build_shopping_cart_payload(order_id=order_id, cart_id=cart_id, air_id=air_id, currency=currency)
+    if store is not None and air_id:
+        _attach_existing_ancillaries(store, order_id=order_id, cart_id=cart_id, air_id=air_id, shopping_cart=shopping_cart)
     shopping_cart["step"] = "FLIGHTS_SELECTION"
     shopping_cart["pricing"] = _make_pricing(total_amount, currency)
 
@@ -305,6 +368,10 @@ async def put_deselect_options(request: Request) -> JSONResponse:
         _mark_selected(option_set, cheapest_option_id, cheapest_solution_id)
 
     total_amount, currency = _compute_total(search_obj)
+    ancillaries_total = 0.0
+    if store is not None and air_id:
+        ancillaries_total = _compute_ancillaries_total(store, order_id=order_id, cart_id=cart_id, air_id=air_id)
+    total_amount = total_amount + ancillaries_total
     cart_state.pricing = _make_pricing(total_amount, currency)
     cart_state.selection_confirmed = False
     cart_state.updated_at = now_utc_iso()
@@ -312,6 +379,8 @@ async def put_deselect_options(request: Request) -> JSONResponse:
 
     air_id = _resolve_air_id(store, ctx, order_id, cart_id)
     shopping_cart = _build_shopping_cart_payload(order_id=order_id, cart_id=cart_id, air_id=air_id, currency=currency)
+    if store is not None and air_id:
+        _attach_existing_ancillaries(store, order_id=order_id, cart_id=cart_id, air_id=air_id, shopping_cart=shopping_cart)
     shopping_cart["step"] = "FLIGHTS_SEARCH"
     shopping_cart["pricing"] = _make_pricing(total_amount, currency)
 
@@ -341,6 +410,10 @@ async def selection_confirmation(request: Request) -> JSONResponse:
     cart_state, _ = store.ensure_shopping_cart(order_id, cart_id)
     search_obj = _safe_json(cart_state.flights_search)
     total_amount, currency = _compute_total(search_obj) if search_obj else (0.0, "USD")
+    ancillaries_total = 0.0
+    if store is not None and air_id:
+        ancillaries_total = _compute_ancillaries_total(store, order_id=order_id, cart_id=cart_id, air_id=air_id)
+    total_amount = total_amount + ancillaries_total
 
     if request.method.upper() == "POST":
         cart_state.selection_confirmed = True
@@ -363,6 +436,8 @@ async def selection_confirmation(request: Request) -> JSONResponse:
     air_state.ancillaries["flightsSelection"]["confirmed"] = confirmed
 
     shopping_cart = _build_shopping_cart_payload(order_id=order_id, cart_id=cart_id, air_id=air_id, currency=currency)
+    if store is not None and air_id:
+        _attach_existing_ancillaries(store, order_id=order_id, cart_id=cart_id, air_id=air_id, shopping_cart=shopping_cart)
     shopping_cart["step"] = step
     shopping_cart["pricing"] = _make_pricing(total_amount, currency)
     routes = _selected_routes(search_obj) if search_obj else []

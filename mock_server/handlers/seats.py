@@ -320,7 +320,7 @@ def _reprice_cart(
     cart_id: str,
     air_id: str,
 ) -> tuple[dict[str, Any], str]:
-    """Recompute cart pricing based on flights + seat selections."""
+    """Recompute cart pricing based on flights + seat selections + baggage."""
 
     cart_state, _ = store.ensure_shopping_cart(order_id, cart_id)
     order_state, _ = store.ensure_order(order_id, ctx)
@@ -337,7 +337,17 @@ def _reprice_cart(
             sd = _safe_json(s)
             seat_total += _seat_price(str(sd.get("rowNumber") or ""), str(sd.get("seatNumber") or ""))
 
-    total = flights_total + seat_total
+    bag_total = 0.0
+    items = air_state.ancillaries.get("baggageItems")
+    if isinstance(items, list):
+        for it in items:
+            itd = _safe_json(it)
+            try:
+                bag_total += float(itd.get("amount"))
+            except Exception:  # noqa: BLE001
+                continue
+
+    total = flights_total + seat_total + bag_total
 
     cart_state.pricing = _make_pricing(total, currency)
     cart_state.updated_at = now_utc_iso()
@@ -627,7 +637,4 @@ async def post_special_assistance_seats_update(request: Request) -> JSONResponse
     )
 
     payload["mock"] = {"kind": "SpecialAssistanceSeatsUpdate", "count": len(seat_selections)}
-    return JSONResponse(payload, status_code=200)
-
-    }
     return JSONResponse(payload, status_code=200)
