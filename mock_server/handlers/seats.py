@@ -320,7 +320,7 @@ def _reprice_cart(
     cart_id: str,
     air_id: str,
 ) -> tuple[dict[str, Any], str]:
-    """Recompute cart pricing based on flights + seat selections + baggage."""
+    """Recompute cart pricing based on flights + seat selections + baggage + meals/drinks."""
 
     cart_state, _ = store.ensure_shopping_cart(order_id, cart_id)
     order_state, _ = store.ensure_order(order_id, ctx)
@@ -347,7 +347,19 @@ def _reprice_cart(
             except Exception:  # noqa: BLE001
                 continue
 
-    total = flights_total + seat_total + bag_total
+    meal_total = 0.0
+    meal_items = air_state.ancillaries.get("mealItems")
+    if isinstance(meal_items, list):
+        for it in meal_items:
+            itd = _safe_json(it)
+            pricing = _safe_json(itd.get("pricing"))
+            amount = _safe_json(_safe_json(pricing.get("total")).get("price")).get("amount")
+            try:
+                meal_total += float(amount or 0.0)
+            except Exception:  # noqa: BLE001
+                continue
+
+    total = flights_total + seat_total + bag_total + meal_total
 
     cart_state.pricing = _make_pricing(total, currency)
     cart_state.updated_at = now_utc_iso()
